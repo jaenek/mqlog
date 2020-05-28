@@ -48,7 +48,7 @@ func callback(client mqtt.Client, msg mqtt.Message) {
 }
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
-	// TODO add topic menu
+	// TODO(#1): Add topic menu
 	filename := "topics/test/data"
 	_, err := os.Open(filename)
 	if os.IsNotExist(err) {
