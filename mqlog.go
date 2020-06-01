@@ -50,6 +50,15 @@ func callback(client mqtt.Client, msg mqtt.Message) {
 func datahandler(w http.ResponseWriter, r *http.Request) {
 	// TODO(#1): Add topic menu
 	filename := "topics/test/data"
+	servefile(w, r, filename)
+}
+
+func filehandler(w http.ResponseWriter, r *http.Request) {
+	filename := r.URL.Path[len("/mqlog/"):]
+	servefile(w, r, "public/"+filename)
+}
+
+func servefile(w http.ResponseWriter, r *http.Request, filename string) {
 	_, err := os.Open(filename)
 	if os.IsNotExist(err) {
 		log.WithFields(log.Fields{
@@ -66,7 +75,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	port := flag.String("p", "8080", "port to serve on")
+	port := flag.String("p", "8000", "port to serve on")
 	directory := flag.String("d", "./public", "the directory of static file to host")
 	flag.Parse()
 
@@ -77,8 +86,8 @@ func main() {
 		"port": *port,
 	}).Info("File server started.")
 
-	http.HandleFunc("/sp.data", datahandler)
-	http.Handle("/", http.FileServer(http.Dir(*directory)))
+	http.HandleFunc("/mqlog/sp.data", datahandler)
+	http.HandleFunc("/mqlog/", filehandler)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 
 	c.Disconnect(250)
