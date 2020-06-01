@@ -2,7 +2,34 @@
 <head>
 	<meta charset="utf-8">
 	<title>mqlog</title>
+	<style>
+		body {
+			margin: 0;
+			font-family: monospace;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		header {
+			width: 60vw;
+			height: 5vh;
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-items: center;
+		}
+
+		h1 { flex-grow: 1; }
+		h3 {
+			flex-grow: 3;
+			text-align: right;
+		}
+	</style>
 </head>
+<header>
+	<h1>mqlog</h1><h3>topics</h3>
+</header>
 <canvas id="canvas"></canvas>
 <script src="sp.js"></script>
 <script>
@@ -18,9 +45,20 @@
 		vars.delim=';';
 	}
 
+	if (!vars.marginx) {
+		vars.marginx = '0';
+	}
+
+	if (!vars.marginy) {
+		vars.marginy = '0';
+	}
+
 	Module({
 		arguments: [
-			"-d", vars.delim,
+			'-d', vars.delim,
+			'-n',
+			'-mx', vars.marginx,
+			'-my', vars.marginy,
 			vars.file
 		],
 		canvas: (() => document.getElementById('canvas'))(),
