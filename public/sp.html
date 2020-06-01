@@ -4,16 +4,19 @@
 	<title>mqlog</title>
 	<style>
 		body {
-			margin: 0;
+			width: 70vw;
+			margin: 0 auto;
 			font-family: monospace;
 			display: flex;
-			flex-direction: column;
+			flex-direction: row;
+			flex-wrap: wrap;
 			align-items: center;
+			justify-content: space-around;
 		}
 
 		header {
 			width: 60vw;
-			height: 5vh;
+			height: 7vh;
 			display: flex;
 			flex-direction: row;
 			align-items: center;
@@ -25,15 +28,61 @@
 			flex-grow: 3;
 			text-align: right;
 		}
+
+		hr {
+			width: 100%;
+			border-top: 1px solid #000000;
+		}
+
+		.inputs {
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			width: 400px;
+		}
+
+		input {
+			width: 100%;
+		}
 	</style>
 </head>
 <header>
-	<h1>mqlog</h1><h3>topics</h3>
+	<h1>mqlog</h1><h3>tematy</h3>
 </header>
+<hr>
 <canvas id="canvas"></canvas>
+<div class="inputs">
+<div class="input">
+<h2>opcje:</h2>
+<label for"mx"> margines x:</label><br>
+<input type="range" min="0" max="600" value="0" id="mx">
+</div>
+<div class="input">
+<label for"my"> margines y:</label><br>
+<input type="range" min="0" max="240" value="100" id="my">
+</div>
+</div>
 <script src="sp.js"></script>
 <script>
+	function newModule() {
+		return Module({
+			arguments: [
+				'-d', vars.delim,
+				'-n',
+				'-mx', vars.marginx,
+				'-my', vars.marginy,
+				vars.file
+			],
+			canvas: (() => document.getElementById('canvas'))(),
+		}).then(() => {
+			console.log('Loaded!');
+		});
+	}
+
     var vars = {};
+	const marginx = document.getElementById("mx");
+	const marginy = document.getElementById("my");
+
     var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi,
 		function(m,key,value) {vars[key] = value;});
 
@@ -47,22 +96,21 @@
 
 	if (!vars.marginx) {
 		vars.marginx = '0';
+	} else {
+		marginx.value = parseInt(vars.marginx);
 	}
 
 	if (!vars.marginy) {
-		vars.marginy = '0';
+		vars.marginy = '100';
+	} else {
+		marginy.value = parseInt(vars.marginy);
 	}
 
-	Module({
-		arguments: [
-			'-d', vars.delim,
-			'-n',
-			'-mx', vars.marginx,
-			'-my', vars.marginy,
-			vars.file
-		],
-		canvas: (() => document.getElementById('canvas'))(),
-	}).then(() => {
-		console.log('Loaded!');
-	});
+	newModule();
+
+	marginx.addEventListener("change",
+		function() { vars.marginx = marginx.value.toString(); newModule()});
+
+	marginy.addEventListener("change",
+		function() { vars.marginy = marginy.value.toString(); newModule()});
 </script>
