@@ -17,7 +17,12 @@ type Page struct {
 	Topics []string
 }
 
-func mqttinit(hostname, port string, topics []string) mqtt.Client {
+type Mqlog struct {
+	client mqtt.Client
+	page Page
+}
+
+func (m* Mqlog) init(hostname, port string, topics []string) mqtt.Client {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(hostname+":"+port)
 	opts.SetClientID("mqlog")
@@ -56,22 +61,22 @@ func callback(client mqtt.Client, msg mqtt.Message) {
 	}
 }
 
-func (p* Page) datahandler(w http.ResponseWriter, r *http.Request) {
+func (m* Mqlog) datahandler(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Path[len("/mqlog/"):]
 	if filename == "" {
-		p.rendertemplate(w, r, "topics.html")
+		m.rendertemplate(w, r, "topics.html")
 		return
 	}
 	servefile(w, r, filename)
 }
 
-func (p* Page) filehandler(w http.ResponseWriter, r *http.Request) {
+func (m* Mqlog) filehandler(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Path[len("/mqlog/"):]
 	if filename == "" || filename == "sp.html" {
-		p.rendertemplate(w, r, "public/sp.html")
+		m.rendertemplate(w, r, "public/sp.html")
 		return
 	} else if filename == "topics.html" {
-		p.rendertemplate(w, r, "public/"+filename)
+		m.rendertemplate(w, r, "public/"+filename)
 		return
 	}
 	servefile(w, r, "public/"+filename)
@@ -93,7 +98,7 @@ func servefile(w http.ResponseWriter, r *http.Request, filename string) {
 	http.ServeFile(w, r, filename)
 }
 
-func (p* Page) rendertemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
+func (m* Mqlog) rendertemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 	log.WithFields(log.Fields{
 		"file": tmpl,
 	}).Info("Rendering template.")
@@ -107,7 +112,7 @@ func (p* Page) rendertemplate(w http.ResponseWriter, r *http.Request, tmpl strin
 		return
 	}
 
-	err = t.Execute(w, p)
+	err = t.Execute(w, m.page)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"file": tmpl,
@@ -117,12 +122,24 @@ func (p* Page) rendertemplate(w http.ResponseWriter, r *http.Request, tmpl strin
 	}
 }
 
+func (m* Mqlog) addhandler(w http.ResponseWriter, r *http.Request) {
+	topic := r.FormValue("newtopic")
+	log.WithFields(log.Fields{
+		"topic": topic,
+	}).Info("Add new topic.")
+
+	m.page.Topics = append(m.page.Topics, topic)
+	m.client.Subscribe(topic, 0, callback)
+
+	http.Redirect(w, r, "/mqlog/", http.StatusFound)
+}
+
 func main() {
 	port := flag.String("p", "8000", "port to serve on")
 	mqtthost := flag.String("h", "localhost", "hostname for mqtt broker")
 	mqttport := flag.String("m", "1883", "port for mqtt broker")
 	directory := flag.String("d", "./public", "the directory of static file to host")
-	topics := flag.String("t", "test/data", "topic to subscribe to")
+	topics := flag.String("t", "", "topic to subscribe to")
 	flag.Parse()
 
 	log.WithFields(log.Fields{
@@ -133,15 +150,18 @@ func main() {
 		"topics": *topics,
 	}).Info("File server started.")
 
-	p := &Page{
+	m := &Mqlog{}
+
+	m.page = Page{
 		Topics: strings.Split(*topics, ","),
 	}
 
-	c := mqttinit(*mqtthost, *mqttport, p.Topics)
+	m.client = m.init(*mqtthost, *mqttport, m.page.Topics)
 
-	http.HandleFunc("/mqlog/topics/", p.datahandler)
-	http.HandleFunc("/mqlog/", p.filehandler)
+	http.HandleFunc("/mqlog/topics/", m.datahandler)
+	http.HandleFunc("/mqlog/add", m.addhandler)
+	http.HandleFunc("/mqlog/", m.filehandler)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 
-	c.Disconnect(250)
+	m.client.Disconnect(250)
 }
