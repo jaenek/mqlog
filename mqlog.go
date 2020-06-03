@@ -1,18 +1,20 @@
 package main
 
 import (
+	"path/filepath"
 	"flag"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	log "github.com/sirupsen/logrus"
 )
 
-func mqttinit() mqtt.Client {
+func mqttinit(hostname, port string, topics []string) mqtt.Client {
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker("localhost:1883")
+	opts.AddBroker(hostname+":"+port)
 	opts.SetClientID("mqlog")
 
 	c := mqtt.NewClient(opts)
@@ -20,7 +22,9 @@ func mqttinit() mqtt.Client {
 		panic(token.Error())
 	}
 
-	c.Subscribe("test/data", 0, callback)
+	for _, topic := range topics {
+		c.Subscribe(topic, 0, callback)
+	}
 
 	return c
 }
@@ -35,7 +39,7 @@ func callback(client mqtt.Client, msg mqtt.Message) {
 
 	data, err := ioutil.ReadFile(filename)
 	if os.IsNotExist(err) {
-		os.MkdirAll(filename[:len(filename)-len("/data")], 0755)
+		os.MkdirAll(filename[:-len(filepath.Base(filename))], 0755)
 	}
 
 	data = append(data, append(msg.Payload(), '\n')...)
@@ -76,15 +80,21 @@ func servefile(w http.ResponseWriter, r *http.Request, filename string) {
 
 func main() {
 	port := flag.String("p", "8000", "port to serve on")
+	mqtthost := flag.String("h", "localhost", "hostname for mqtt broker")
+	mqttport := flag.String("m", "1883", "port for mqtt broker")
 	directory := flag.String("d", "./public", "the directory of static file to host")
+	topics := flag.String("t", "test/data", "topic to subscribe to")
 	flag.Parse()
 
-	c := mqttinit()
-
 	log.WithFields(log.Fields{
-		"directory": *directory,
 		"port": *port,
+		"mqtthost": *mqtthost,
+		"mqttport": *mqttport,
+		"directory": *directory,
+		"topics": *topics,
 	}).Info("File server started.")
+
+	c := mqttinit(*mqtthost, *mqttport, strings.Split(*topics, ","))
 
 	http.HandleFunc("/mqlog/sp.data", datahandler)
 	http.HandleFunc("/mqlog/", filehandler)
