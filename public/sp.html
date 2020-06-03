@@ -56,9 +56,9 @@
 <h2>opcje:</h2>
 <label for"topics">tematy:</label><br>
 <select id="topics">
-<option value="test/data">test/data</option>
-<option value="test/data1">test/data1</option>
-<option value="test3">test3</option>
+{{range .Topics}}
+<option value="{{.}}">{{.}}</option>
+{{end}}
 </select><br>
 <label for"mx">margines x:</label><br>
 <input type="range" min="0" max="600" value="0" id="mx">

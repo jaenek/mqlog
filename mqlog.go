@@ -7,10 +7,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	log "github.com/sirupsen/logrus"
 )
+
+type Page struct {
+	Topics []string
+}
 
 func mqttinit(hostname, port string, topics []string) mqtt.Client {
 	opts := mqtt.NewClientOptions()
@@ -51,17 +56,31 @@ func callback(client mqtt.Client, msg mqtt.Message) {
 	}
 }
 
-func datahandler(w http.ResponseWriter, r *http.Request) {
+func (p* Page) datahandler(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Path[len("/mqlog/"):]
+	if filename == "" {
+		p.rendertemplate(w, r, "topics.html")
+		return
+	}
 	servefile(w, r, filename)
 }
 
-func filehandler(w http.ResponseWriter, r *http.Request) {
+func (p* Page) filehandler(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Path[len("/mqlog/"):]
+	if filename == "" || filename == "sp.html" {
+		p.rendertemplate(w, r, "public/sp.html")
+		return
+	} else if filename == "topics.html" {
+		p.rendertemplate(w, r, "public/"+filename)
+		return
+	}
 	servefile(w, r, "public/"+filename)
 }
 
 func servefile(w http.ResponseWriter, r *http.Request, filename string) {
+	log.WithFields(log.Fields{
+		"file": filename,
+	}).Info("Serving file.")
 	_, err := os.Open(filename)
 	if os.IsNotExist(err) {
 		log.WithFields(log.Fields{
@@ -72,9 +91,30 @@ func servefile(w http.ResponseWriter, r *http.Request, filename string) {
 	}
 
 	http.ServeFile(w, r, filename)
+}
+
+func (p* Page) rendertemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 	log.WithFields(log.Fields{
-		"file": filename,
-	}).Info("Serving file.")
+		"file": tmpl,
+	}).Info("Rendering template.")
+
+	t, err := template.ParseFiles(tmpl)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file": tmpl,
+		}).Error(err.Error())
+		http.NotFound(w, r)
+		return
+	}
+
+	err = t.Execute(w, p)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file": tmpl,
+		}).Error(err.Error())
+		http.NotFound(w, r)
+		return
+	}
 }
 
 func main() {
@@ -93,10 +133,14 @@ func main() {
 		"topics": *topics,
 	}).Info("File server started.")
 
-	c := mqttinit(*mqtthost, *mqttport, strings.Split(*topics, ","))
+	p := &Page{
+		Topics: strings.Split(*topics, ","),
+	}
 
-	http.HandleFunc("/mqlog/topics/", datahandler)
-	http.HandleFunc("/mqlog/", filehandler)
+	c := mqttinit(*mqtthost, *mqttport, p.Topics)
+
+	http.HandleFunc("/mqlog/topics/", p.datahandler)
+	http.HandleFunc("/mqlog/", p.filehandler)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 
 	c.Disconnect(250)
