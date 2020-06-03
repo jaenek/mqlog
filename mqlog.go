@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -52,7 +54,9 @@ func callback(client mqtt.Client, msg mqtt.Message) {
 		os.MkdirAll(filename[:len(filename)-len(filepath.Base(filename))], 0755)
 	}
 
-	data = append(data, append(msg.Payload(), '\n')...)
+	lines := []byte(strconv.Itoa(bytes.Count(data, []byte("\n"))))
+	line := bytes.Join([][]byte{lines, []byte(";"), msg.Payload(), []byte("\n")}, []byte(""))
+	data = append(data, line...)
 	err = ioutil.WriteFile(filename, data, 0644)
 	if err != nil {
 		log.WithFields(log.Fields{
