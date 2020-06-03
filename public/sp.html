@@ -1,53 +1,13 @@
 <!doctype html>
 <head>
-	<meta charset="utf-8">
-	<title>mqlog</title>
-	<style>
-		body {
-			width: 70vw;
-			margin: 0 auto;
-			font-family: monospace;
-			display: flex;
-			flex-direction: row;
-			flex-wrap: wrap;
-			align-items: center;
-			justify-content: space-around;
-		}
-
-		header {
-			width: 60vw;
-			height: 7vh;
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			justify-items: center;
-		}
-
-		h1 { flex-grow: 1; }
-		h3 {
-			flex-grow: 3;
-			text-align: right;
-		}
-
-		hr {
-			width: 100%;
-			border-top: 1px solid #000000;
-		}
-
-		.inputs {
-			display: flex;
-			flex-direction: column;
-			justify-content: space-between;
-			width: 400px;
-		}
-
-		input {
-			width: 100%;
-		}
-	</style>
+<meta charset="utf-8">
+<title>mqlog</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <header>
-	<h1>mqlog</h1><h3>tematy</h3>
+<div id="logo">mqlog</div>
+<a class="nav" href="/mqlog/">index</a>
+<a class="nav" href="/mqlog/topics.html">tematy</a>
 </header>
 <hr>
 <canvas id="canvas"></canvas>
@@ -69,61 +29,4 @@
 </div>
 </div>
 <script src="sp.js"></script>
-<script>
-	function newModule(topic) {
-		return Module({
-			arguments: [
-				'-d', vars.delim,
-				'-n',
-				'-mx', vars.marginx,
-				'-my', vars.marginy,
-				vars.file
-			],
-			canvas: (() => document.getElementById('canvas'))(),
-			locateFile: function(path, prefix) {
-			  if (path.endsWith(".data")) return "topics/" + topic;
-			  return prefix + path;
-			}
-		}).then(() => {
-			console.log('Loaded!');
-		});
-	}
-
-    var vars = {};
-	const marginx = document.getElementById("mx");
-	const marginy = document.getElementById("my");
-
-    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi,
-		function(m,key,value) {vars[key] = value;});
-
-	if (!vars.file) {
-		vars.file='data';
-	}
-
-	if (!vars.delim) {
-		vars.delim=';';
-	}
-
-	if (!vars.marginx) {
-		vars.marginx = '0';
-	} else {
-		marginx.value = parseInt(vars.marginx);
-	}
-
-	if (!vars.marginy) {
-		vars.marginy = '100';
-	} else {
-		marginy.value = parseInt(vars.marginy);
-	}
-
-	newModule(topics.value);
-
-	topics.addEventListener("change",
-		function() { newModule(topics.value) });
-
-	marginx.addEventListener("change",
-		function() { vars.marginx = marginx.value.toString(); newModule(topics.value)});
-
-	marginy.addEventListener("change",
-		function() { vars.marginy = marginy.value.toString(); newModule(topics.value)});
-</script>
+<script src="module.js"></script>

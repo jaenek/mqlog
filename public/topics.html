@@ -1,0 +1,21 @@
+<head>
+<meta charset="utf-8">
+<title>mqlog</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<header>
+<div id="logo">mqlog</div>
+<a class="nav" href="/mqlog/">index</a>
+<a class="nav" href="/mqlog/topics.html">tematy</a>
+</header>
+<hr>
+<div class="menu">
+{{range .Topics}}
+<div class="topic">{{.}}
+{{end}}
+<form action="/mqlog/topics.html" method="post">
+<label for="newtopic">Nowy temat:</label>
+<input type="text" id="newtopic" name="newtopic">
+<input type="submit" value="Submit">
+<form>
+</div>
