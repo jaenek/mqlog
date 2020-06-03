@@ -1,11 +1,11 @@
 package main
 
 import (
-	"path/filepath"
 	"flag"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -39,7 +39,7 @@ func callback(client mqtt.Client, msg mqtt.Message) {
 
 	data, err := ioutil.ReadFile(filename)
 	if os.IsNotExist(err) {
-		os.MkdirAll(filename[:-len(filepath.Base(filename))], 0755)
+		os.MkdirAll(filename[:len(filename)-len(filepath.Base(filename))], 0755)
 	}
 
 	data = append(data, append(msg.Payload(), '\n')...)
@@ -52,8 +52,7 @@ func callback(client mqtt.Client, msg mqtt.Message) {
 }
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
-	// TODO(#1): Add topic menu
-	filename := "topics/test/data"
+	filename := r.URL.Path[len("/mqlog/"):]
 	servefile(w, r, filename)
 }
 
@@ -96,7 +95,7 @@ func main() {
 
 	c := mqttinit(*mqtthost, *mqttport, strings.Split(*topics, ","))
 
-	http.HandleFunc("/mqlog/sp.data", datahandler)
+	http.HandleFunc("/mqlog/topics/", datahandler)
 	http.HandleFunc("/mqlog/", filehandler)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 

@@ -54,17 +54,23 @@
 <div class="inputs">
 <div class="input">
 <h2>opcje:</h2>
-<label for"mx"> margines x:</label><br>
+<label for"topics">tematy:</label><br>
+<select id="topics">
+<option value="test/data">test/data</option>
+<option value="test/data1">test/data1</option>
+<option value="test3">test3</option>
+</select><br>
+<label for"mx">margines x:</label><br>
 <input type="range" min="0" max="600" value="0" id="mx">
 </div>
 <div class="input">
-<label for"my"> margines y:</label><br>
+<label for"my">margines y:</label><br>
 <input type="range" min="0" max="240" value="100" id="my">
 </div>
 </div>
 <script src="sp.js"></script>
 <script>
-	function newModule() {
+	function newModule(topic) {
 		return Module({
 			arguments: [
 				'-d', vars.delim,
@@ -74,6 +80,10 @@
 				vars.file
 			],
 			canvas: (() => document.getElementById('canvas'))(),
+			locateFile: function(path, prefix) {
+			  if (path.endsWith(".data")) return "topics/" + topic;
+			  return prefix + path;
+			}
 		}).then(() => {
 			console.log('Loaded!');
 		});
@@ -106,11 +116,14 @@
 		marginy.value = parseInt(vars.marginy);
 	}
 
-	newModule();
+	newModule(topics.value);
+
+	topics.addEventListener("change",
+		function() { newModule(topics.value) });
 
 	marginx.addEventListener("change",
-		function() { vars.marginx = marginx.value.toString(); newModule()});
+		function() { vars.marginx = marginx.value.toString(); newModule(topics.value)});
 
 	marginy.addEventListener("change",
-		function() { vars.marginy = marginy.value.toString(); newModule()});
+		function() { vars.marginy = marginy.value.toString(); newModule(topics.value)});
 </script>
