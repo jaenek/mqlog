@@ -1,9 +1,6 @@
 .PHONY: all run build
 
-all: build run
+all: build
 
 build:
 	@go build ./
-
-run:
-	@./mqlog
