@@ -4,29 +4,43 @@
 <title>mqlog</title>
 <link rel="stylesheet" href="styles.css">
 </head>
+
 <header>
 <div id="logo">mqlog</div>
 <a class="nav" href="/mqlog/">index</a>
 <a class="nav" href="/mqlog/topics.html">tematy</a>
 </header>
+
 <hr>
+
 <canvas id="canvas"></canvas>
+
 <div class="inputs">
-<div class="input">
 <h2>opcje:</h2>
+
+<div class="input">
 <label for"topics">tematy:</label><br>
 <select id="topics">
 {{range .Topics}}
 <option value="{{.}}">{{.}}</option>
 {{end}}
 </select><br>
+</div>
+
+<div class="input">
 <label for"mx">margines x:</label><br>
 <input type="range" min="0" max="600" value="0" id="mx">
 </div>
+
 <div class="input">
 <label for"my">margines y:</label><br>
 <input type="range" min="0" max="240" value="100" id="my">
 </div>
+
+<div class="input">
+<label for"vis">ostatnie:</label><br>
+<input type="range" min="1" value="100" id="vis">
 </div>
+
 <script src="sp.js"></script>
 <script src="module.js"></script>

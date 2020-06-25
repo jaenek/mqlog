@@ -132,7 +132,12 @@ func (m* Mqlog) addhandler(w http.ResponseWriter, r *http.Request) {
 		"topic": topic,
 	}).Info("Add new topic.")
 
-	m.page.Topics = append(m.page.Topics, topic)
+	if m.page.Topics[0] == "" {
+		m.page.Topics = []string{topic}
+	} else {
+		m.page.Topics = append(m.page.Topics, topic)
+	}
+
 	m.client.Subscribe(topic, 0, callback)
 
 	http.Redirect(w, r, "/mqlog/", http.StatusFound)
