@@ -2,7 +2,6 @@ function newModule(topic) {
 	return Module({
 		arguments: [
 			'-d', vars.delim,
-			'-n',
 			'-mx', vars.marginx,
 			'-my', vars.marginy,
 			vars.file
